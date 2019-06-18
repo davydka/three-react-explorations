@@ -3,3 +3,9 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 # React Three Explorations
 
 Just some experiments with React, Three js, and GSAP.
+
+
+## Getting Started
+
+* `npm install`
+* `npm start`
