@@ -6,15 +6,21 @@ class GradientAnimation extends React.Component {
   constructor(props){
     super(props);
 
+    this.stats = null;
     this.startTime = Date.now();
     this.canvasHolder = null;
     this.uniforms = {
+      previz: { type: 'f', value: false},
       colorB: {type: 'vec3', value: new THREE.Color(0xACB6E5)},
       colorA: {type: 'vec3', value: new THREE.Color(0x74ebd5)},
-      time: { type: "f", value: 1.0 },
-      resolution: { type: "v2", value: new THREE.Vector2() }
+      time: { type: 'f', value: 1.0 },
+      resolution: { type: 'v2', value: new THREE.Vector2() }
     };
   };
+
+  state = {
+    previz: false
+  }
 
   componentDidMount() {
     const width = this.canvasHolder.clientWidth;
@@ -35,6 +41,7 @@ class GradientAnimation extends React.Component {
     // Shape
     this.uniforms.resolution.value.x = window.innerWidth;
     this.uniforms.resolution.value.y = window.innerHeight;
+    this.uniforms.previz.value = this.state.previz;
 
     let geometry = new THREE.PlaneGeometry( 4, 4, 32 );
     let material =  new THREE.ShaderMaterial({
@@ -54,15 +61,19 @@ class GradientAnimation extends React.Component {
 
     const spotLight = new THREE.SpotLight();
     const spotLightHelper = new THREE.SpotLightHelper(spotLight);
-    // spotLight.add(spotLightHelper);
+    spotLight.add(spotLightHelper);
     this.scene.add(spotLight);
 
     // set position of spotLight,
     // and helper must be updated when doing that
     spotLight.position.set(100, 200, 100);
-    // spotLightHelper.update();
+    spotLightHelper.update();
 
     if (!this.frameId) {
+      this.stats = new window.Stats();
+      this.stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+      document.body.appendChild( this.stats.dom );
+
       this.frameId = requestAnimationFrame(this.animate)
     }
   };
@@ -80,28 +91,44 @@ class GradientAnimation extends React.Component {
   };
 
   animate = () => {
+    this.stats.begin();
+
     const elapsedMilliseconds = Date.now() - this.startTime;
     const elapsedSeconds = elapsedMilliseconds / 1000.;
     this.uniforms.time.value = 60. * elapsedSeconds;
 
     this.renderer.render(this.scene, this.camera)
     this.frameId = window.requestAnimationFrame(this.animate);
+
+    this.stats.end();
   };
 
   onWindowResize( event ) {
     this.renderer.setSize( window.innerWidth, window.innerHeight );
     this.uniforms.resolution.value.x = window.innerWidth;
     this.uniforms.resolution.value.y = window.innerHeight;
-  }
+  };
+
+  handleClick = () => {
+    this.setState(
+      {previz: !this.state.previz},
+      () => {this.uniforms.previz.value = this.state.previz; console.log(this.state.previz);})
+  };
 
   render () {
     return (
-      <div className="ui" style={{overflow:'hidden'}}>
+      <div className='ui' style={{overflow:'hidden'}}>
         <div
-          id="canvasHolder"
-          style={{ width: "100vw", height: "100vh" }}
+          id='canvasHolder'
+          style={{ width: '100vw', height: '100vh' }}
           ref={mount => this.canvasHolder = mount}>
         </div>
+        <button
+          className='ui button'
+          onClick={this.handleClick}
+          style={{position:'absolute', bottom:'20px', left:'20px'}}>
+            Previz: {this.state.previz ? 'True': 'False'}
+        </button>
       </div>
     )
   };
